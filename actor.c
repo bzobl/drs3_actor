@@ -4,11 +4,14 @@
 #define PWM_STEP_SIZE          ((pwm_t)200)
 #define PWM_DEFAULT_DUTY_CYCLE (PWM_STEP_SIZE/3)  //TODO default?
 
-#define INVALID 0;
-#define VALID 1;
+#define MISSING  0
+#define RECEIVED 1
+
+#define NO_ERROR 0
 
 typedef struct {
-  uint8_t valid;
+  uint8_t received;
+  uint8_t error;
   pwm_t value;
 } VoterValue;
 
@@ -27,7 +30,7 @@ static void pwm_init(void)
 void actor_init(void)
 {
   for (int i = 0; i < NUM_OF_SENSORS; i++) {
-    voter_inputs[i].valid = INVALID;
+    voter_inputs[i].received = MISSING;
   }
 }
 
@@ -41,10 +44,11 @@ static inline int sensor_id_to_idx(int id)
   return id;
 }
 
-void actor_add_voter_value(int sensor_id, pwm_t value)
+void actor_add_voter_value(int sensor_id, uint8_t error, pwm_t value)
 {
   voter_inputs[sensor_id_to_idx(sensor_id)].value = value;
-  voter_inputs[sensor_id_to_idx(sensor_id)].valid = VALID;
+  voter_inputs[sensor_id_to_idx(sensor_id)].received = RECEIVED;
+  voter_inputs[sensor_id_to_idx(sensor_id)].received = RECEIVED;
 }
 
 static void pwm_set_duty_cycle(pwm_t const duty_cycle)
@@ -56,20 +60,42 @@ static void pwm_set_duty_cycle(pwm_t const duty_cycle)
 
 bool actor_vote(void)
 {
+  static pwm_t last_vote = 0;
+  static int n_unchanged_votes = 0;
+
   int n_valid = 0;
+  pwm_t duty_cycle = 0;
 
   for (int i = 0; i < NUM_OF_SENSORS; i++) {
-    if (voter_inputs[i].valid == INVALID) {
+    if (voter_inputs[i].received == MISSING) {
       continue;
     }
 
-    // reset valid flag for next round
-    voter_inputs[i].valid = INVALID;
+    if (voter_inputs[i].error != NO_ERROR) {
+
+    }
+
+    // reset received flag for next round
+    voter_inputs[i].received = MISSING;
     n_valid++;
   }
 
   if (n_valid < MIN_NODES) {
     return false;
+  }
+
+  // TODO vote
+  // TODO set new pwm duty cycle
+
+  // check whether the duty_cycle has changed
+  if (duty_cycle == last_vote) {
+    n_unchanged_votes++;
+  } else {
+    last_vote = duty_cycle;
+  }
+
+  if (n_unchanged_votes >= UNCHANGED_VOTE_ERROR_LIMIT) {
+    // TODO error handling
   }
 
   return true;
