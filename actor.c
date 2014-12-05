@@ -1,7 +1,7 @@
 #include "actor.h"
 #include "msp430.h"
 
-#define PWM_STEP_SIZE          ((pwm_t)200)
+#define PWM_STEP_SIZE          ((pwm_t)400)
 #define PWM_DEFAULT_DUTY_CYCLE (PWM_STEP_SIZE/3)  //TODO default?
 
 #define MISSING  0
@@ -22,7 +22,7 @@ static void pwm_init(void)
   /* init Timer/PWM */
   P2SEL |= BIT5; // link pwm to the dout pin
   TA1CCR0 = PWM_STEP_SIZE;
-  TA1CCR2 = 0;
+  TA1CCR2 = PWM_DEFAULT_DUTY_CYCLE;
   TA1CTL = TASSEL_2 + MC_1;
   TA1CCTL2 = OUTMOD_7;
 }
@@ -32,6 +32,8 @@ void actor_init(void)
   for (int i = 0; i < NUM_OF_SENSORS; i++) {
     voter_inputs[i].received = MISSING;
   }
+
+  pwm_init();
 }
 
 /*
@@ -53,8 +55,8 @@ void actor_add_voter_value(int sensor_id, uint8_t error, pwm_t value)
 
 static void pwm_set_duty_cycle(pwm_t const duty_cycle)
 {
-  if (dutyCycle >= 0) {
-    TA1CCR2 = dutyCycle;
+  if (duty_cycle >= 0) {
+    TA1CCR2 = duty_cycle;
   }
 }
 
