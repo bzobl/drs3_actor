@@ -42,8 +42,14 @@ int handleApplicationEvent(int nEvent, void *pParam)
 {
 	int nRequestMode= RT_MODE_IDLE;
 
+	uint16_t pwm = 0;
+
 	switch(nEvent) {
     case RT_TICK:
+      //FIXME: setting compare value while running does not yet work
+      pwm_set_compare_value(pwm);
+      pwm += 10;
+      if (pwm > 400) pwm = 0;
       break;
 
     case RT_ADC:
