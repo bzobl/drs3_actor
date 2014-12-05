@@ -11,7 +11,7 @@
  * Author: dietmar millinger
  * Revision: 0.4
  *
- *   ACLK = n/a, MCLK = DCO ~16MHz, SMCLK = DCO/8 (2MHz),  BRCLK = SMCLK/2
+ *   ACLK = n/a, MCLK = DCO ~16MHz, SMCLK = DCO/4 (4MHz),  BRCLK = SMCLK/2
  *
  *                    MSP430G2xx3
  *                 -----------------
@@ -47,7 +47,7 @@ void initRT(int nPeriodInClockTicks)
   WDTCTL = WDTPW | WDTHOLD;     // stop watchdog
 
   BCSCTL1 = CALBC1_16MHZ;       // set 16MHz DCO values
-  BCSCTL2 = DIVS_3;             // source SMCLK from DCO with divider 8
+  BCSCTL2 = DIVS_2;             // source SMCLK from DCO with divider 4
   DCOCTL = CALDCO_16MHZ;
   __delay_cycles(8000000);      // wait for PLL to settle
 
