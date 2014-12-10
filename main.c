@@ -7,8 +7,7 @@
 //
 //
 //   ACLK = n/a, MCLK = DCO ~16MHz, SMCLK = DCO/4 , BRCLK = SMCLK/4
-//
-//
+// //
 //                    MSP430G2xx3
 //                 -----------------
 //                |             P1.2|-> Data Out(UCA0SIMO)
@@ -29,6 +28,8 @@
 /* tick period in timer clock cycles a 4Mhz: 1ms == 4000 */
 #define CL_PERIOD               ((int)4000)
 
+//static Node this_node = Actor1;
+
 int main(void)
 {
 	/* setup board */
@@ -46,6 +47,7 @@ int handleApplicationEvent(int nEvent, void *pParam)
 
 	switch(nEvent) {
     case RT_TICK:
+      //com_tick_sync();
       //FIXME: setting compare value while running does not yet work
       pwm_set_compare_value(pwm);
       pwm += 10;
@@ -56,6 +58,8 @@ int handleApplicationEvent(int nEvent, void *pParam)
       break;
 
     case RT_STARTUP:
+          //comInit(this_node);
+          //com_handle_receive(actor_receive_cb);
           //setupCANController();
           actor_init();
 
