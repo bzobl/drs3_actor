@@ -28,7 +28,8 @@
 /* tick period in timer clock cycles a 4Mhz: 1ms == 4000 */
 #define CL_PERIOD               ((int)4000)
 
-//static Node this_node = Actor1;
+#define NODE_NAME 				(Actor1)
+#define VOTE_PERIOD				((int) 5)
 
 int main(void)
 {
@@ -39,19 +40,57 @@ int main(void)
   executeRTloop();
 }
 
+typedef enum {
+	LOREM
+} Node;
+
+typedef enum {
+	PSync,
+	PDutyCycle,
+	PError
+} PacketType;
+
+void packet_received(Node sender, uint16_t timestamp, PacketType type, void *packet)
+{
+	switch (type) {
+	case PSync:
+		break;
+	case PDutyCycle:
+	{
+		// TODO: is Error in DutyCycle packet?
+		uint8_t * duty_cycle = (uint8_t *)packet;
+		actor_add_voter_value((int) sender, 0, *duty_cycle);
+		break;
+	}
+	case PError:
+	{
+		uint8_t * error = (uint8_t *)packet;
+		actor_add_voter_value((int) sender, *error, 0);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void taskStartVoting() {
+	static uint8_t vote_counter = 0;
+
+	vote_counter++;
+	if (vote_counter >= VOTE_PERIOD) {
+		actor_vote();
+		vote_counter = 0;
+	}
+}
+
 int handleApplicationEvent(int nEvent, void *pParam)
 {
 	int nRequestMode= RT_MODE_IDLE;
 
-	uint16_t pwm = 0;
-
 	switch(nEvent) {
     case RT_TICK:
       //com_tick_sync();
-      //FIXME: setting compare value while running does not yet work
-      pwm_set_compare_value(pwm);
-      pwm += 10;
-      if (pwm > 400) pwm = 0;
+      taskStartVoting();
       break;
 
     case RT_ADC:
@@ -61,6 +100,8 @@ int handleApplicationEvent(int nEvent, void *pParam)
           //comInit(this_node);
           //com_handle_receive(actor_receive_cb);
           //setupCANController();
+    	  //com_init(NODE_NAME);
+    	  //com_handle_receive(packet_received);
           actor_init();
 
           clearLED1();

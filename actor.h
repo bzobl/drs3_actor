@@ -6,6 +6,7 @@
 
 #define NUM_OF_SENSORS 3
 #define MIN_NODES      2
+#define THRESHOLD	   10
 
 #define UNCHANGED_VOTE_ERROR_LIMIT 5
 
