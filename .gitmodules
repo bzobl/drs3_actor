@@ -1,0 +1,3 @@
+[submodule "libs"]
+	path = libs
+	url = git@git.rknoll.at:hagenberg/drs.git
