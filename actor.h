@@ -35,8 +35,10 @@ void pwm_set_compare_value(uint16_t const compare_value);
  * adds a new value to the next vote
  * @param sensor_id ID of the sensor this value is from
  * @param value value to be voted for
+ *
+ * @return boolean whether a value is overwritten
  */
-void actor_add_voter_value(int sensor_id, uint8_t error, duty_cycle_t value);
+bool actor_add_voter_value(int sensor_id, uint8_t error, duty_cycle_t value);
 
 /**
  * initiates voting

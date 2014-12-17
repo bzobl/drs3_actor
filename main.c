@@ -25,11 +25,16 @@
 #include "runtime.h"
 #include "mcp2515.h"
 
+#include "com.h"
+
 /* tick period in timer clock cycles a 4Mhz: 1ms == 4000 */
 #define CL_PERIOD               ((int)4000)
 
-#define NODE_NAME 				(Actor1)
-#define VOTE_PERIOD				((int) 5)
+#define MACRO_TICKS				((int) 1)
+#define VOTE_SLOT				((int) 0)
+
+static enum Node my_node = Actuator1;
+static int slot_now = 1;
 
 int main(void)
 {
@@ -40,56 +45,80 @@ int main(void)
   executeRTloop();
 }
 
-typedef enum {
-	LOREM
-} Node;
-
-typedef enum {
-	PSync,
-	PDutyCycle,
-	PError
-} PacketType;
-
-void packet_received(Node sender, uint16_t timestamp, PacketType type, void *packet)
+void packet_received_cb(enum Node sender, uint16_t timestamp, enum PacketType type, void *packet)
 {
 	switch (type) {
 	case PSync:
 		break;
 	case PDutyCycle:
 	{
-		// TODO: is Error in DutyCycle packet?
 		uint8_t * duty_cycle = (uint8_t *)packet;
-		actor_add_voter_value((int) sender, 0, *duty_cycle);
-		break;
-	}
-	case PError:
-	{
-		uint8_t * error = (uint8_t *)packet;
-		actor_add_voter_value((int) sender, *error, 0);
+		if (actor_add_voter_value((int) sender, 0, *duty_cycle)) {
+			// red led on, when a value is overwritten
+			setLED1();
+		}
 		break;
 	}
 	default:
 		break;
 	}
+
+	//TODO set slot_now;
+	slot_now = 1;
 }
 
 void taskStartVoting() {
-	static uint8_t vote_counter = 0;
+	// TODO set slot_now!
+	if (slot_now == VOTE_SLOT) {
+		if (actor_vote()) {
+			// green led on
+			clearLED2();
+		} else {
+			// green led off
+			setLED2();
+		}
 
-	vote_counter++;
-	if (vote_counter >= VOTE_PERIOD) {
-		actor_vote();
-		vote_counter = 0;
+		// clear red led of previous voting
+		clearLED1();
 	}
 }
 
 int handleApplicationEvent(int nEvent, void *pParam)
 {
 	int nRequestMode= RT_MODE_IDLE;
+	enum TickStatus status;
 
 	switch(nEvent) {
     case RT_TICK:
-      //com_tick_sync();
+      status = com_tick();
+      switch (status) {
+      	  case Error:
+      		  // set red led in case of error
+      		  setLED1();
+      		  // set error of sender in current tick?
+      		  //actor_add_voter_value((int) sender, *error, 0);
+      		  break;
+
+      	  case BadPktType:
+      		  // TODO ?
+      		  break;
+
+      	  case BadPacket:
+      		  // TODO ?
+      		  break;
+
+      	  case NotConnected:
+      		  // TODO ?
+      		  break;
+
+      	  case Connected:
+      		  // TODO ?
+      		  break;
+
+      	  default:
+      		  break;
+      }
+
       taskStartVoting();
       break;
 
@@ -97,11 +126,8 @@ int handleApplicationEvent(int nEvent, void *pParam)
       break;
 
     case RT_STARTUP:
-          //comInit(this_node);
-          //com_handle_receive(actor_receive_cb);
-          //setupCANController();
-    	  //com_init(NODE_NAME);
-    	  //com_handle_receive(packet_received);
+    	  com_init(MACRO_TICKS, my_node);
+    	  com_register_receiving_handler(packet_received_cb);
           actor_init();
 
           clearLED1();

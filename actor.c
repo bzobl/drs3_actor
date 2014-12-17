@@ -43,14 +43,18 @@ void actor_init(void)
  */
 static inline int sensor_id_to_idx(int id)
 {
-  return (id & 0xF);
+  return (id & 0x0F);
 }
 
-void actor_add_voter_value(int sensor_id, uint8_t error, duty_cycle_t value)
+bool actor_add_voter_value(int sensor_id, uint8_t error, duty_cycle_t value)
 {
+  bool new_value = (voter_inputs[sensor_id_to_idx(sensor_id)].received == MISSING);
+
   voter_inputs[sensor_id_to_idx(sensor_id)].value = value;
   voter_inputs[sensor_id_to_idx(sensor_id)].error = error;
   voter_inputs[sensor_id_to_idx(sensor_id)].received = RECEIVED;
+
+  return new_value;
 }
 
 void pwm_set_compare_value(uint16_t const compare_value)
@@ -98,9 +102,9 @@ bool compare_values(bool *valid, duty_cycle_t *voted_cycle)
 						take_value[i][j] = true;
 						taken++;
 					} else {
-						uint8_t their_value = voter_inputs[j].value;
+						uint8_t other_value = voter_inputs[j].value;
 
-						if ((their_value >= lower_range) && (their_value <= upper_range)) {
+						if ((other_value >= lower_range) && (other_value <= upper_range)) {
 							take_value[i][j] = true;
 							taken++;
 						} else {
