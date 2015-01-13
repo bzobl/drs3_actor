@@ -30,10 +30,9 @@
 /* tick period in timer clock cycles a 4Mhz: 1ms == 4000 */
 #define CL_PERIOD               ((int)4000)
 
-#define MACRO_TICKS				((int) 1)
 #define VOTE_SLOT				((int) 0)
 
-static enum Node my_node = Actuator1;
+static TNode my_node = Actuator1;
 static int slot_now = 1;
 
 int main(void)
@@ -45,10 +44,24 @@ int main(void)
   executeRTloop();
 }
 
-void packet_received_cb(enum Node sender, uint16_t timestamp, enum PacketType type, void *packet)
+void startVoting() {
+    if (actor_vote()) {
+    	// green led on
+        clearLED2();
+    } else {
+        // green led off
+        setLED2();
+    }
+
+    // clear red led of previous voting
+    clearLED1();
+}
+
+void packet_received_cb(TNode sender, uint8_t slot, TPacketType type, void *packet)
 {
 	switch (type) {
 	case PSync:
+		startVoting();
 		break;
 	case PDutyCycle:
 	{
@@ -63,33 +76,23 @@ void packet_received_cb(enum Node sender, uint16_t timestamp, enum PacketType ty
 		break;
 	}
 
-	//TODO set slot_now;
-	slot_now = 1;
-}
-
-void taskStartVoting() {
-	// TODO set slot_now!
-	if (slot_now == VOTE_SLOT) {
-		if (actor_vote()) {
-			// green led on
-			clearLED2();
-		} else {
-			// green led off
-			setLED2();
-		}
-
-		// clear red led of previous voting
-		clearLED1();
-	}
+	slot_now = slot;
 }
 
 int handleApplicationEvent(int nEvent, void *pParam)
 {
 	int nRequestMode= RT_MODE_IDLE;
-	enum TickStatus status;
+	TTickStatus status;
 
 	switch(nEvent) {
     case RT_TICK:
+
+      //TODO: when is the slot_now increased?
+      // not each RT_TICK is also a receive slot
+      // does the communication lib return an error, if the expected packet
+      // of a sensor is not received
+              slot_now = ((slot_now + 1) % NUM_OF_SENSORS);
+
       status = com_tick();
       switch (status) {
       	  case Error:
@@ -99,8 +102,13 @@ int handleApplicationEvent(int nEvent, void *pParam)
       		  //actor_add_voter_value((int) sender, *error, 0);
       		  break;
 
+      	  case SendError:
+      		  break;
+
+      	  case SyncError:
+      		  break;
+
       	  case BadPktType:
-      		  // TODO ?
       		  break;
 
       	  case BadPacket:
@@ -119,14 +127,13 @@ int handleApplicationEvent(int nEvent, void *pParam)
       		  break;
       }
 
-      taskStartVoting();
       break;
 
     case RT_ADC:
       break;
 
     case RT_STARTUP:
-    	  com_init(MACRO_TICKS, my_node);
+    	  com_init(my_node);
     	  com_register_receiving_handler(packet_received_cb);
           actor_init();
 

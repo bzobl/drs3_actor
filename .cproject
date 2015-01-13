@@ -81,7 +81,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="libs/UE03/src/lnk_msp430g2553.cmd|libs/UE01|libs/UE03/src/can.c|libs/UE03/src/spi.c|libs/UE03/src/runtime.c|libs/UE03/src/main.c|libs/UE03/src/targetConfigs|libs/UE03/src/SensorLib" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="libs/PIRegler|libs/UE02|libs/UE03/src/lnk_msp430g2553.cmd|libs/UE01|libs/UE03/src/can.c|libs/UE03/src/spi.c|libs/UE03/src/runtime.c|libs/UE03/src/main.c|libs/UE03/src/targetConfigs|libs/UE03/src/SensorLib" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
